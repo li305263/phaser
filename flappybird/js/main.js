@@ -17,7 +17,14 @@ var config = {
         update: update
     }
 };
-
+var platforms,play,ground,ground2,bg = null
+var OVER = false
+var groundSpeed = 0
+var bgSpeed = 0
+var platformsSpeed = -200
+var pipesW = 54
+var pipesX = config.width
+var rd,topY,bottomY;
 var game = new Phaser.Game(config);
 // 预加载
 function preload() {
@@ -32,60 +39,70 @@ function preload() {
     this.load.audio('flap','assets/flap.wav')
     this.load.audio('ouch','assets/ouch.wav')
     //加载雪碧图资源
-    this.load.spritesheet('pipes','assets/pipes.png',{frameWidth:54,frameHeight:320})
+    this.load.spritesheet('pipes','assets/pipes.png',{frameWidth:pipesW,frameHeight:320})
     this.load.spritesheet('bird','assets/bird.png',{frameWidth:34,frameHeight:24})
 
-    console.log('preload');
 }
-
-var platforms,play,ground,ground2,bg = null
-var OVER = false
-var groundSpeed = 0
-var bgSpeed = 0
-var platformsSpeed = -200
-
 function createPipes(){
     /** 水管创建范围
      * x 100-135 y 上-30-30,下390-450 
      */
-    //添加静态物理物体组
-    //platforms = this.physics.add.staticGroup()
-    var topY = Phaser.Math.Between(-30,30)
-    var bottomY = Phaser.Math.Between(380,440)
-    console.log(topY,bottomY)
+     rd = Phaser.Math.Between(100,135)
+     topY = Phaser.Math.Between(-40,20)
+     bottomY = Phaser.Math.Between(390,440)
+     pipesX+=rd
+     
     //上水管
-    platforms.create(375,topY,"pipes")
+    platforms.create(pipesX,topY,"pipes")
     //下水管
-    platforms.create(375,bottomY,"pipes",1)
+    platforms.create(pipesX,bottomY,"pipes",1)
 
-    platforms.setVelocityX(platformsSpeed) 
-
+    
     //循环子组件设置重力为false
     platforms.children.iterate(function(child){
-        console.log(child)
         child.body.allowGravity = false;
-        // child.body.moves  = false;
-        
     })
+
+    if(platforms.children.size<4){
+        createPipes()
+    }
 }
+
+function updatePipes(){
+    platforms.children.iterate(function(child){
+        if(child.body.x< -pipesW){
+            topY = Phaser.Math.Between(-40,20)
+            bottomY = Phaser.Math.Between(390,440)
+            if(child.body.y<20){
+
+                child.body.reset(config.width,topY)
+
+            }else{
+
+                child.body.reset(config.width,bottomY)
+
+            }
+        }
+    })
+    platforms.setVelocityX(platformsSpeed)       
+}
+
 // 加载完成执行
 function create() {
     // 添加背景进画布
     bg = this.add.tileSprite(config.width/2, config.height/2, config.width, config.height, 'background')
+
     //添加物理物体组
+    
     platforms = this.physics.add.group()
     platforms.enableBody = true;
     
     createPipes()
     //添加静态物理精灵
-    ground2 = this.physics.add.staticSprite(config.width-335/2, config.height-112/2, 'ground')
-
     ground = this.add.tileSprite(config.width-335/2, config.height-112/2,335,112, 'ground')
-
-
+    ground = this.physics.add.existing(ground, 'staticSprite')
     //添加有重力的游戏角色
     player = this.physics.add.sprite(100,100,'bird')
-
 
     //设置碰撞回弹值
     // player.setBounce(0.2);
@@ -102,11 +119,7 @@ function create() {
 
     // 角色飞行动画   
     player.anims.play('fly')
-    
-    console.log('create');
-   
 }
-
 
 function gameOver(){
     OVER = true
@@ -114,15 +127,6 @@ function gameOver(){
     platforms.setVelocityX(0) 
     // console.log('gameOver')
 }
-/*
-    Mouse/touch events
-    scene.input.on('pointerdown', function(pointer, currentlyOver){ });
-    scene.input.on('pointerup', function(pointer, currentlyOver){ });
-    scene.input.on('pointermove', function(pointer, currentlyOver){ });
-    scene.input.on('pointerover', function(pointer, justOver){ });
-    scene.input.on('pointerout', function(pointer, justOut){ });
-*/
-
 //  更新函数
 function update() {
     var that = this
@@ -130,11 +134,13 @@ function update() {
     // 背景地面无限滚动
     if(!OVER){
         bgSpeed+=0.5
-        groundSpeed+=2
+        groundSpeed+=5
 
         bg.tilePositionX =  bgSpeed
         ground.tilePositionX =  groundSpeed
+        updatePipes()
     }
+
 
     //添加碰撞
     this.physics.add.overlap(player,platforms,function(){
@@ -143,7 +149,7 @@ function update() {
         gameOver()
         console.log('与管道重叠了 ')
     })
-    this.physics.add.collider(player,ground2,function(){
+    this.physics.add.collider(player,ground,function(){
         if(OVER) return;
         that.sound.play('ground-hit')
         gameOver()
@@ -166,5 +172,4 @@ function update() {
     //判断角色下降角度
     if(player.angle < 90) player.angle += 2.5;
 
-    // console.log('update1');
 }
