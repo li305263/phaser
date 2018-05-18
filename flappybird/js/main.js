@@ -49,8 +49,8 @@ function createPipes(){
     /** 水管创建范围
      * x 100-135 y 上-30-30,下390-450 
      */
-    var topY = Phaser.Math.Between(-10,30)
-    var bottomY = Phaser.Math.Between(380,400)
+    var topY = Phaser.Math.Between(-30,30)
+    var bottomY = Phaser.Math.Between(380,440)
     console.log(topY,bottomY)
     //上水管
     platforms.create(375,topY,"pipes")
