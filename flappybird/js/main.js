@@ -45,10 +45,11 @@ var bgSpeed = 0
 var platformsSpeed = -200
 
 function createPipes(){
-
     /** 水管创建范围
      * x 100-135 y 上-30-30,下390-450 
      */
+    //添加静态物理物体组
+    //platforms = this.physics.add.staticGroup()
     var topY = Phaser.Math.Between(-30,30)
     var bottomY = Phaser.Math.Between(380,440)
     console.log(topY,bottomY)
@@ -58,6 +59,14 @@ function createPipes(){
     platforms.create(375,bottomY,"pipes",1)
 
     platforms.setVelocityX(platformsSpeed) 
+
+    //循环子组件设置重力为false
+    platforms.children.iterate(function(child){
+        console.log(child)
+        child.body.allowGravity = false;
+        // child.body.moves  = false;
+        
+    })
 }
 // 加载完成执行
 function create() {
@@ -73,16 +82,6 @@ function create() {
 
     ground = this.add.tileSprite(config.width-335/2, config.height-112/2,335,112, 'ground')
 
-    //添加静态物理物体组
-    //platforms = this.physics.add.staticGroup()
-    
-    //循环子组件设置重力为false
-    platforms.children.iterate(function(child){
-        console.log(child)
-        child.body.allowGravity = false;
-        // child.body.moves  = false;
-        
-    })
 
     //添加有重力的游戏角色
     player = this.physics.add.sprite(100,100,'bird')
