@@ -1,3 +1,21 @@
+// 添加自定义场景
+var loadScene = {
+    key:'loadScene',
+    active:true,
+    preload: loadPreload,
+    create: loadCreate,
+}
+
+var gameStartScene = {
+    key:'gameStartScene',
+    create: gameCreate,
+    update: update
+}
+
+var gameOverScene = {
+    key:'gameOverScene',
+    create:overCreate
+}
 // 游戏配置
 var config = {
     type: Phaser.AUTO,
@@ -8,47 +26,71 @@ var config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 600 },
-            debug: false
+            debug: false,
         }
     },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
+    scene: [loadScene,gameStartScene,gameOverScene],
 };
-var platforms,play,ground,ground2,bg = null
+var platforms,play,ground,ground2,bg,scoreText = null
 var OVER = false
 var groundSpeed = 0
 var bgSpeed = 0
+var score = 0
 var platformsSpeed = -200
 var pipesW = 54
 var pipesX = config.width
 var rd,topY,bottomY;
 var game = new Phaser.Game(config);
 // 预加载
-function preload() {
+function loadPreload() {
     // 加载图片资源
+    // this.load.image('preloader','assets/preloader.gif')
+    this.load.image('title','assets/title.png')
+    this.load.image('start-button','assets/start-button.png')
+    this.load.image('instructions','assets/instructions.png')
     this.load.image('background','assets/background.png')
     this.load.image('ground','assets/ground.png')
     this.load.image('gameover','assets/gameover.png')
-    this.load.image('get-ready','assets/get-ready.png')
     //加载音效
+    this.load.audio('score','assets/score.wav')
     this.load.audio('ground-hit','assets/ground-hit.wav')
     this.load.audio('pipe-hit','assets/pipe-hit.wav')
-    this.load.audio('flap','assets/flap.wav')
-    this.load.audio('ouch','assets/ouch.wav')
+    // this.load.audio('flap','assets/flap.wav')
     //加载雪碧图资源
     this.load.spritesheet('pipes','assets/pipes.png',{frameWidth:pipesW,frameHeight:320})
     this.load.spritesheet('bird','assets/bird.png',{frameWidth:34,frameHeight:24})
 
 }
+// 游戏准备
+function loadCreate(){
+    // 添加背景进画布    
+    bg = this.add.tileSprite(config.width/2, config.height/2, config.width, config.height, 'background')
+    var title =  this.add.image(config.width/2,100,'title')
+    var instructions =  this.add.image(config.width/2,config.height/2,'instructions')
+    var startButton = this.add.image(config.width/2,config.height-100,'start-button').setInteractive()
+
+    //添加动画
+    this.anims.create({
+        key:'fly',
+        frames:this.anims.generateFrameNumbers('bird',{start : 0,end : 2}),
+        frameRate:10,
+        repeat:-1,
+    })
+    
+    startButton.on('pointerdown', function (pointer) {
+        title.destroy()
+        startButton.destroy()
+        instructions.destroy()   
+        game.scene.start('gameStartScene');
+    });
+}
+//创建水管
 function createPipes(){
     /** 水管创建范围
      * x 100-135 y 上-30-30,下390-450 
      */
      rd = Phaser.Math.Between(100,135)
-     topY = Phaser.Math.Between(-40,20)
+     topY = Phaser.Math.Between(-40,30)
      bottomY = Phaser.Math.Between(390,440)
      pipesX+=rd
      
@@ -67,14 +109,18 @@ function createPipes(){
         createPipes()
     }
 }
+//更新水管位置
+function updatePipes(that){
 
-function updatePipes(){
     platforms.children.iterate(function(child){
-        if(child.body.x< -pipesW){
-            topY = Phaser.Math.Between(-40,20)
-            bottomY = Phaser.Math.Between(390,440)
-            if(child.body.y<20){
 
+        if(child.body.x< -pipesW){
+            topY = Phaser.Math.Between(-60,0)
+            bottomY = Phaser.Math.Between(400,460)
+            if(child.body.y<20){
+                score++
+                scoreText.setText(score)
+                that.sound.play('score')
                 child.body.reset(config.width,topY)
 
             }else{
@@ -82,65 +128,71 @@ function updatePipes(){
                 child.body.reset(config.width,bottomY)
 
             }
+            
         }
     })
-    platforms.setVelocityX(platformsSpeed)       
 }
 
-// 加载完成执行
-function create() {
-    // 添加背景进画布
-    bg = this.add.tileSprite(config.width/2, config.height/2, config.width, config.height, 'background')
-
+// 游戏开始
+function gameCreate() {
+    
     //添加物理物体组
-    
     platforms = this.physics.add.group()
-    platforms.enableBody = true;
-    
+    // platforms.enableBody = true;
     createPipes()
     //添加静态物理精灵
     ground = this.add.tileSprite(config.width-335/2, config.height-112/2,335,112, 'ground')
     ground = this.physics.add.existing(ground, 'staticSprite')
+
+    scoreText = this.add.text(10,10,score)
+    scoreText.setFontSize(36);
     //添加有重力的游戏角色
     player = this.physics.add.sprite(100,100,'bird')
-
-    //设置碰撞回弹值
-    // player.setBounce(0.2);
-    //设置重力边界
-    player.setCollideWorldBounds(true);
-
-    //添加动画
-    this.anims.create({
-        key:'fly',
-        frames:this.anims.generateFrameNumbers('bird',{start : 0,end : 2}),
-        frameRate:10,
-        repeat:-1,
-    })
-
     // 角色飞行动画   
     player.anims.play('fly')
 }
 
+function overCreate() {
+    var title = this.add.image(config.width/2,100,'gameover')
+    var startButton = this.add.image(config.width/2,config.height-100,'start-button').setInteractive()
+    var that = this
+    startButton.on('pointerdown', function (pointer) {
+        title.destroy()
+        startButton.destroy()
+        platforms.clear(true)
+        player.destroy()
+        ground.destroy()
+        scoreText.setText(score)
+        // player.x = 100
+        // player.y = 100
+        OVER = false
+        console.log(player.setGravityY())
+        game.scene.start('gameStartScene');
+        
+    });
+}
 function gameOver(){
     OVER = true
+    score = 0
+    bgSpeed = 0
+    groundSpeed = 0
+    pipesX = config.width
     player.anims.stop('fly')
     platforms.setVelocityX(0) 
-    // console.log('gameOver')
+    game.scene.start('gameOverScene');
 }
 //  更新函数
 function update() {
     var that = this
-
     // 背景地面无限滚动
     if(!OVER){
         bgSpeed+=0.5
         groundSpeed+=5
-
         bg.tilePositionX =  bgSpeed
         ground.tilePositionX =  groundSpeed
-        updatePipes()
+        updatePipes(this)
+        platforms.setVelocityX(platformsSpeed)            
     }
-
 
     //添加碰撞
     this.physics.add.overlap(player,platforms,function(){
@@ -159,7 +211,6 @@ function update() {
     //添加按下事件监听
     this.input.on('pointerdown', function(pointer, currentlyOver){
         if(OVER) return;
-        // that.sound.play('flap')
         that.tweens.add({
             targets: player,
             duration:50,
