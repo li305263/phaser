@@ -166,7 +166,6 @@ function overCreate() {
         // player.x = 100
         // player.y = 100
         OVER = false
-        console.log(player.setGravityY())
         game.scene.start('gameStartScene');
         
     });
