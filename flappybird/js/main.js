@@ -162,7 +162,7 @@ function overCreate() {
         platforms.clear(true)
         player.destroy()
         ground.destroy()
-        scoreText.setText(score)
+        scoreText.destroy()
         // player.x = 100
         // player.y = 100
         OVER = false
