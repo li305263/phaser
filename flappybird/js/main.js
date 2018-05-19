@@ -5,13 +5,11 @@ var loadScene = {
     preload: loadPreload,
     create: loadCreate,
 }
-
 var gameStartScene = {
     key:'gameStartScene',
     create: gameCreate,
     update: update
 }
-
 var gameOverScene = {
     key:'gameOverScene',
     create:overCreate
@@ -90,30 +88,24 @@ function createPipes(){
      * x 100-135 y 上-30-30,下390-450 
      */
      rd = Phaser.Math.Between(100,135)
-     topY = Phaser.Math.Between(-40,30)
-     bottomY = Phaser.Math.Between(390,440)
-     pipesX+=rd
-     
+     topY = Phaser.Math.Between(-40,20)
+     bottomY = Phaser.Math.Between(380,440)
+     pipesX+=rd 
     //上水管
     platforms.create(pipesX,topY,"pipes")
     //下水管
-    platforms.create(pipesX,bottomY,"pipes",1)
-
-    
+    platforms.create(pipesX,bottomY,"pipes",1) 
     //循环子组件设置重力为false
     platforms.children.iterate(function(child){
         child.body.allowGravity = false;
     })
-
     if(platforms.children.size<4){
         createPipes()
     }
 }
 //更新水管位置
 function updatePipes(that){
-
     platforms.children.iterate(function(child){
-
         if(child.body.x< -pipesW){
             topY = Phaser.Math.Between(-60,0)
             bottomY = Phaser.Math.Between(400,460)
@@ -122,20 +114,14 @@ function updatePipes(that){
                 scoreText.setText(score)
                 that.sound.play('score')
                 child.body.reset(config.width,topY)
-
             }else{
-
                 child.body.reset(config.width,bottomY)
-
-            }
-            
+            }          
         }
     })
 }
-
 // 游戏开始
-function gameCreate() {
-    
+function gameCreate() { 
     //添加物理物体组
     platforms = this.physics.add.group()
     // platforms.enableBody = true;
@@ -143,7 +129,6 @@ function gameCreate() {
     //添加静态物理精灵
     ground = this.add.tileSprite(config.width-335/2, config.height-112/2,335,112, 'ground')
     ground = this.physics.add.existing(ground, 'staticSprite')
-
     scoreText = this.add.text(10,10,score)
     scoreText.setFontSize(36);
     //添加有重力的游戏角色
@@ -151,26 +136,39 @@ function gameCreate() {
     // 角色飞行动画   
     player.anims.play('fly')
 }
-
 function overCreate() {
     var title = this.add.image(config.width/2,100,'gameover')
     var startButton = this.add.image(config.width/2,config.height-100,'start-button').setInteractive()
     var that = this
     startButton.on('pointerdown', function (pointer) {
-        title.destroy()
-        startButton.destroy()
-        platforms.clear(true)
-        player.destroy()
-        ground.destroy()
-        scoreText.destroy()
-        // player.x = 100
-        // player.y = 100
         OVER = false
-        game.scene.start('gameStartScene');
-        
+        title.destroy()
+        startButton.destroy()    
+        //1.有重力bug
+        // platforms.clear(true)
+        // player.destroy()
+        // ground.destroy()
+        // scoreText.destroy()
+        // game.scene.start('gameStartScene');    
+        // 2.临时补救方法
+        restart()
     });
 }
-function gameOver(){
+function restart(){
+    rd = Phaser.Math.Between(100,135)
+    pipesX+=rd 
+    platforms.children.entries[0].body.reset(pipesX,Phaser.Math.Between(-40,30))
+    platforms.children.entries[1].body.reset(pipesX,Phaser.Math.Between(390,440))
+    platforms.children.entries[2].body.reset(pipesX+rd,Phaser.Math.Between(-40,30))
+    platforms.children.entries[3].body.reset(pipesX+rd,Phaser.Math.Between(390,440))
+    player.x = 100
+    player.y = 100
+    player.angle = 0
+    player.anims.play('fly')
+    scoreText.setText(score)
+    game.scene.resume('gameStartScene');      
+}
+function gameOver(that){
     OVER = true
     score = 0
     bgSpeed = 0
@@ -190,9 +188,13 @@ function update() {
         bg.tilePositionX =  bgSpeed
         ground.tilePositionX =  groundSpeed
         updatePipes(this)
-        platforms.setVelocityX(platformsSpeed)            
+        platforms.setVelocityX(platformsSpeed) 
+        //判断角色下降角度
+    if(player.angle < 90) player.angle += 2.5;
+        this.physics.resume()
+    }else{
+        this.physics.pause()
     }
-
     //添加碰撞
     this.physics.add.overlap(player,platforms,function(){
         if(OVER) return;
@@ -206,7 +208,6 @@ function update() {
         gameOver()
         console.log('碰撞了地面')
     })
-
     //添加按下事件监听
     this.input.on('pointerdown', function(pointer, currentlyOver){
         if(OVER) return;
@@ -218,8 +219,5 @@ function update() {
         //设置角色Y轴速度
         player.setVelocityY(-200)     
     });
-
-    //判断角色下降角度
-    if(player.angle < 90) player.angle += 2.5;
-
+    
 }
