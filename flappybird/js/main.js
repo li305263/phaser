@@ -87,7 +87,6 @@ function loadFn(){
 // 预加载
 function loadPreload() {
     // 加载图片资源
-    // this.load.image('preloader','assets/preloader.gif')
     this.load.image('title','assets/title.png')
     this.load.image('start-button','assets/start-button.png')
     this.load.image('instructions','assets/instructions.png')
@@ -98,11 +97,10 @@ function loadPreload() {
     this.load.audio('score','assets/score.wav')
     this.load.audio('ground-hit','assets/ground-hit.wav')
     this.load.audio('pipe-hit','assets/pipe-hit.wav')
-    // this.load.audio('flap','assets/flap.wav')
     //加载雪碧图资源
     this.load.spritesheet('pipes','assets/pipes.png',{frameWidth:pipesW,frameHeight:320})
     this.load.spritesheet('bird','assets/bird.png',{frameWidth:34,frameHeight:24})
-
+    loadFn.call(this)    
 }
 // 游戏准备
 function loadCreate(){
@@ -111,7 +109,6 @@ function loadCreate(){
     var title =  this.add.image(config.width/2,100,'title')
     var instructions =  this.add.image(config.width/2,config.height/2,'instructions')
     var startButton = this.add.image(config.width/2,config.height-100,'start-button').setInteractive()
-
     //添加动画
     this.anims.create({
         key:'fly',
