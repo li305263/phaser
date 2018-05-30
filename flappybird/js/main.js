@@ -41,11 +41,6 @@ var rd,topY,bottomY;
 var game = new Phaser.Game(config);
 // loding函数
 function loadFn(){
-    var progressBar = this.add.graphics();
-    var progressBox = this.add.graphics();
-    progressBox.fillStyle(0x222222, 0.8);
-    progressBox.fillRect(240, 270, 320, 50);
-    
     var width = this.cameras.main.width;
     var height = this.cameras.main.height;
     var loadingText = this.make.text({
@@ -72,14 +67,9 @@ function loadFn(){
        
     this.load.on('progress', function (value) {
         percentText.setText(parseInt(value * 100) + '%');
-        progressBar.clear();
-        progressBar.fillStyle(0xffffff, 1);
-        progressBar.fillRect(250, 280, 300 * value, 30);
     });
 
     this.load.on('complete', function () {
-        progressBar.destroy();
-        progressBox.destroy();
         loadingText.destroy();
         percentText.destroy();
     }); 
