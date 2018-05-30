@@ -81,63 +81,138 @@ function loadPreload() {
     this.load.spritesheet('mouse','assets/images/mouse.png',{frameWidth:137,frameHeight:120})
     loadFn.call(this)    
 }
-var playerPos = {
-    mouse1:{
+var playerPos = [
+
+        {
             x:190,
             y:330,
         },
-    mouse2:{
+        {
             x:375,
             y:330
         },
-    mouse3:{
+        {
             x:575,
             y:340
         },
-    mouse4:{
+        {
             x:160,
             y:422
         },
-    mouse5:{
+        {
             x:375,
             y:422
         },
-    mouse6:{
+        {
             x:575,
             y:422
         },
-    mouse7:{
+        {
             x:160,
             y:516
         },
-    mouse8:{
+        {
             x:375,
             y:526
         },
-    mouse9:{
+        {
             x:595,
             y:530
         }
-}
-function createPlayer(){
-    playerGroup = this.add.group()
-    player.mouse1 = playerGroup.create(playerPos.mouse1.x,playerPos.mouse1.y,'mouse',0).setInteractive().setVisible(false)
-    player.mouse2 = playerGroup.create(playerPos.mouse2.x,playerPos.mouse2.y,'mouse',4).setInteractive().setVisible(false)
-    player.mouse3 = playerGroup.create(playerPos.mouse3.x,playerPos.mouse3.y,'mouse',8).setInteractive().setVisible(false)
-    
-    player.mouse4 = playerGroup.create(playerPos.mouse4.x,playerPos.mouse4.y,'mouse',12).setDepth(1).setInteractive().setVisible(false)
-    player.mouse5 = playerGroup.create(playerPos.mouse5.x,playerPos.mouse5.y,'mouse',16).setDepth(1).setInteractive().setVisible(false)
-    player.mouse6 = playerGroup.create(playerPos.mouse6.x,playerPos.mouse6.y,'mouse',0).setDepth(1).setInteractive().setVisible(false)
+    ]
 
-    player.mouse7 = playerGroup.create(playerPos.mouse7.x,playerPos.mouse7.y,'mouse',0).setDepth(2).setInteractive().setVisible(false)
-    player.mouse8= playerGroup.create(playerPos.mouse8.x,playerPos.mouse8.y,'mouse',4).setDepth(2).setInteractive().setVisible(false)
-    player.mouse9 = playerGroup.create(playerPos.mouse9.x,playerPos.mouse9.y,'mouse',12).setDepth(2).setInteractive().setVisible(false)
+var playerRnd = [
+        {
+            key:0,
+            start:1,
+            end:3
+        },
+        {
+            key:4,
+            start:5,
+            end:7
+        },
+        {
+            key:8,
+            start:9,
+            end:11
+        },
+        {
+            key:12,
+            start:13,
+            end:15
+        },
+        {
+            key:16,
+            start:17,
+            end:19
+        }
+    ]
+
+function randomNum(num,n) {
+    var aNum=[];         
+    for (var i = 0; i < num; i++) {
+        var random=Math.round(Math.random()*num);
+        if (aNum.indexOf(random)==-1) {
+            aNum.push(random);
+            if (aNum.length==n) {
+            return aNum;
+            };
+        }
+    }   
+}
+    var num = 0 
+    var arrRnd = randomNum(8,3)
+function createPlayer(){
+    var that = this
+    var rndPos =  arrRnd[num]
+    var rndPlayer =  Phaser.Math.Between(0,4)
+    var playerZ = 0
+    
+    if(rndPos>2&&rndPos<5){
+        playerZ = 1 
+    }else if(rndPos>=5){
+        playerZ = 2
+    }
+   var play =  playerGroup.create(playerPos[rndPos].x,playerPos[rndPos].y,'mouse',playerRnd[rndPlayer].key).setDepth(playerZ).setInteractive().setVisible(false)
+   play.rndPos = playerPos[rndPos].y
+    //添加动画
+    that.anims.create({
+        key:'hit'+rndPlayer,
+        frames:that.anims.generateFrameNumbers('mouse',{start : playerRnd[rndPlayer].start,end : playerRnd[rndPlayer].end}),
+        frameRate:20,
+    })
+    
+    play.on('pointerdown',function(){
+        startAn.call(that,play.x,play.y)
+        play.anims.play('hit'+rndPlayer)
+    })
+    num++
+    if(playerGroup.children.size<3){
+        // setTimeout(function(){
+            createPlayer.call(that)
+        // },300)
+    }
+    
 }
 function updatePlayer(){
-    
+    if(upSpeed<120){
+        upSpeed=upSpeed+2.5
+    }
+    if(ySpeed<112){
+        ySpeed= ySpeed+2
+    }
+        
+    playerGroup.children.iterate(function(child){
+        child.setVisible(true)
+        child.frame.height = upSpeed;
+        child.frame.cutHeight = upSpeed;
+        child.frame.updateUVs();
+        child.y = child.rndPos -  ySpeed
+    })
+
 }
 function createHole(){
-    hole = this.add.group()
     hole.hole1 = hole.create(200,294,'hole',0)
     hole.hole2 = hole.create(386,294,'hole',1)
     hole.hole3 = hole.create(580,294,'hole',2)   
@@ -168,27 +243,13 @@ function loadCreate(){
     var that = this
     // 添加背景进画布    
     bg = this.add.tileSprite(config.width/2, config.height/2, config.width, config.height, 'background')
+    playerGroup = this.add.group()
+    hole = this.add.group()
     
     createPlayer.call(this)
-    createHole.call(this)
+    createHole()
     
-    
-    //添加动画
-    that.anims.create({
-        key:'hit',
-        frames:that.anims.generateFrameNumbers('mouse',{mouse : 2,end : 3}),
-        frameRate:20,
-    })
-    
-    for(var i in player){
-        (function(i){
-                
-                player[i].on('pointerdown',function(){
-                    startAn.call(that,player[i].x,player[i].y)
-                    player[i].anims.play('hit')
-                })
-        })(i)
-    }
+
     // startButton.on('pointerdown', function (pointer) {
     //     game.scene.start('gameStartScene');
     // });
@@ -212,17 +273,8 @@ var ySpeed = 0
 //  更新函数
 function update() {
     var that = this  
-    if(upSpeed<120){
-        upSpeed=upSpeed+2.5
-    }
-    if(ySpeed<112){
-        ySpeed= ySpeed+2
-    }
+   
 
-    player.mouse9.setVisible(true)
-    player.mouse9.frame.height = upSpeed;
-    player.mouse9.frame.cutHeight = upSpeed;
-    player.mouse9.frame.updateUVs();
-    player.mouse9.y = playerPos.mouse9.y -  ySpeed
+    updatePlayer()
     
 }
