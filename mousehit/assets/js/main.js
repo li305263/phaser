@@ -28,7 +28,7 @@ var player = {}
 var hole = {}
 var OVER = false
 var score = 0
-var time = 10
+var time = 30
 var game = new Phaser.Game(config);
 // loding函数
 function loadFn(){
@@ -69,15 +69,15 @@ function loadFn(){
 function loadPreload() {
     // 加载图片资源
     this.load.image('background','assets/images/bg_canvas.png')
-    this.load.image('hammer','assets/images/hammer.png')
+    // this.load.image('hammer','assets/images/hammer.png')
     //加载音效
-    // this.load.audio('score','assets/images/score.wav')
-    // this.load.audio('ground-hit','assets/images/ground-hit.wav')
-    // this.load.audio('pipe-hit','assets/images/pipe-hit.wav')
+    // this.load.audio('game_music','assets/images/game_music.wav')
+    // this.load.audio('begin_music','assets/images/begin_music.wav')
+    // this.load.audio('over_music','assets/images/over_music.wav')
     //加载雪碧图资源
     // this.load.spritesheet('icon','assets/images/icon.png')
     this.load.spritesheet('star','assets/images/star.png',{frameWidth:125,frameHeight:77})
-    // this.load.spritesheet('next','assets/images/next.png')
+    // this.load.spritesheet('time_roller','assets/images/time_roller.png')
     this.load.spritesheet('hole','assets/images/bg_hole.png',{frameWidth:144,frameHeight:80})
     this.load.spritesheet('mouse','assets/images/mouse.png',{frameWidth:137,frameHeight:120})
     loadFn.call(this)    
@@ -196,9 +196,9 @@ function createPlayer(){
     })
 
     if(playerGroup.children.size<3){
-        setTimeout(function(){
+        // setTimeout(function(){
             createPlayer.call(that)
-        },100)
+        // },100)
     }
     
 }
